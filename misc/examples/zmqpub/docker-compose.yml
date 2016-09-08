@@ -1,0 +1,21 @@
+consul:
+    hostname: consul
+    container_name: consul
+    image: qnib/alpn-consul
+    environment:
+     - DC_NAME=dc1
+     - BOOTSTRAP_CONSUL=true
+     - RUN_SERVER=true
+    ports:
+     - "8500:8500"
+    dns: 127.0.0.1
+    
+qcollect:
+    image: qnib/qcollect
+    hostname: qcollect
+    container_name: qcollect
+    dns: 127.0.0.1
+    links:
+     - consul:consul
+    volumes:
+     - /var/run/docker.sock:/var/run/docker.sock:ro

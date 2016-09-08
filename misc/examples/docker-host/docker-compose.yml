@@ -1,0 +1,53 @@
+consul:
+    hostname: consul
+    container_name: consul
+    image: qnib/alpn-consul
+    environment:
+     - DC_NAME=dc1
+     - BOOTSTRAP_CONSUL=true
+     - RUN_SERVER=true
+    ports:
+     - "8500:8500"
+    dns: 127.0.0.1
+    
+
+influxdb:
+    hostname: influxdb
+    container_name: influxdb
+    dns: 127.0.0.1
+    image: qnib/influxdb
+    volumes:
+    - /opt/influxdb/shared
+    environment:
+    - DC_NAME=dc1
+    - COLLECT_METRICS=false
+    - INFLUXDB_GRAPHITE_ENABLED=true
+    links:
+    - consul:consul
+    ports:
+    - 2003:2003
+    - 8083:8083
+    - 8086:8086
+
+grafana3:
+    image: qnib/grafana3
+    container_name: grafana3
+    hostname: grafana3
+    ports:
+     - "3000:3000"
+    dns: 127.0.0.1
+    environment:
+    - DC_NAME=dc1
+    - COLLECT_METRICS=false
+    links:
+    - consul:consul
+
+qcollect:
+    image: qnib/qcollect
+    hostname: qcollect
+    container_name: qcollect
+    dns: 127.0.0.1
+    links:
+     - consul:consul
+    volumes:
+     - /var/run/docker.sock:/var/run/docker.sock:ro

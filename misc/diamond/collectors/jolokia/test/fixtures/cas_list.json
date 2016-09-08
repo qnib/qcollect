@@ -1,0 +1,11 @@
+{
+  "status": 200,
+  "timestamp": 1458325912,
+  "value": {
+    "org.apache.cassandra.metrics": "1",
+    "org.apache.cassandra.db": "1"
+    },
+  "request": {
+    "type": "list"
+  }
+}

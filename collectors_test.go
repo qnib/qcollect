@@ -24,7 +24,7 @@ var testFakeConfiguration = `{
     },
 
 	"collectorsConfigPath": "/tmp",
-    "diamondCollectorsPath": "src/diamond/collectors",
+    "diamondCollectorsPath": "misc/diamond/collectors",
     "diamondCollectors": [],
 
     "collectors": ["FakeCollector","Test"],

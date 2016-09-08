@@ -3,14 +3,13 @@ package collector
 import (
 	"encoding/json"
 	"fmt"
-	"reflect"
 	"testing"
 	"time"
 
 	"github.com/qnib/qcollect/metric"
-
+	"github.com/docker/engine-api/client"
+	"github.com/docker/engine-api/types"
 	l "github.com/Sirupsen/logrus"
-	"github.com/fsouza/go-dockerclient"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -51,8 +50,6 @@ func TestDockerStatsNewDockerStats(t *testing.T) {
 	assert.Equal(t, d.channel, expectedChan)
 	assert.Equal(t, d.interval, 10)
 	assert.Equal(t, d.name, "DockerStats")
-	assert.Equal(t, reflect.TypeOf(d.previousCPUValues), reflect.TypeOf(expectedType))
-	assert.Equal(t, len(d.previousCPUValues), 0)
 	d.Configure(make(map[string]interface{}))
 	assert.Equal(t, d.GetEndpoint(), endpoint)
 }
@@ -92,8 +89,8 @@ func TestDockerStatsBuildMetrics(t *testing.T) {
 	assert.Equal(t, err, nil)
 	config["generatedDimensions"] = val
 
-	stats := new(docker.Stats)
-	stats.Networks = make(map[string]docker.NetworkStats)
+	stats := new(types.StatsJSON)
+	stats.NetworkStats = make(map[string]types.NetworkStats)
 	stats.Networks["eth0"] = docker.NetworkStats{RxBytes: 10, TxBytes: 20}
 	stats.MemoryStats.Usage = 50
 	stats.MemoryStats.Limit = 70
@@ -141,7 +138,7 @@ func TestDockerStatsBuildMetrics(t *testing.T) {
 	}
 	d := getSUT()
 	d.Configure(config)
-	ret := d.buildMetrics(container, stats, 0.5)
+	ret := d.buildMetrics(container, stats)
 	var newMet metric.Metric
 	for _, met := range ret {
 		newMet = metric.NewExt(met.Name, met.MetricType, met.Value, met.Dimensions, now, false)

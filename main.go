@@ -79,10 +79,10 @@ func main() {
 		{
 			Name:      "visualize",
 			Action:    visualize,
-			Aliases:   []string{"visualise", "vis", "viz"},
+			//Aliases:   []string{"visualise", "vis", "viz"},
 			Flags:     commandFlags,
 			Usage:     "shortest path from your terminal to your graphs",
-			UsageText: "",
+			//UsageText: "",
 		},
 	}
 	app.Run(os.Args)
