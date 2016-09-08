@@ -3,12 +3,11 @@ all: local alpine linux
 test:
 	gom test -cover ./...
 
-local: 
+local:
 	./build.sh
 
-alpine: 
+alpine:
 	docker run --rm -ti -v $(CURDIR):/data/ --workdir /data/ qnib/alpn-go-dev ./build.sh
 
-linux: 
+linux:
 	docker run --rm -ti -v $(CURDIR):/data/ --workdir /data/ qnib/golang ./build.sh
-  
