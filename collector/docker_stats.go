@@ -1,14 +1,14 @@
 package collector
 
 import (
+	"encoding/json"
+	"fmt"
+	"io/ioutil"
 	"reflect"
 	"regexp"
 	"strings"
 	"sync"
 	"time"
-    "encoding/json"
-	"io/ioutil"
-	"fmt"
 
 	"github.com/docker/engine-api/client"
 	"github.com/docker/engine-api/types"
@@ -29,19 +29,20 @@ const (
 // dockerClient is the client for the Docker remote API.
 type DockerStats struct {
 	baseCollector
-	dockerClient      *client.Client
-	statsTimeout      int
-	compiledRegex     map[string]*Regex
-	skipRegex         *regexp.Regexp
-	bufferRegex       *regexp.Regexp
-	endpoint          string
-	mu                *sync.Mutex
+	dockerClient  *client.Client
+	statsTimeout  int
+	compiledRegex map[string]*Regex
+	skipRegex     *regexp.Regexp
+	bufferRegex   *regexp.Regexp
+	endpoint      string
+	mu            *sync.Mutex
 }
 
 // CntStat is encapsulate a fetch container stats for a gochannel
 type CntStat struct {
-	Stats 	types.StatsJSON
-	Ok 		bool
+	Container types.Container
+	Stats     types.StatsJSON
+	Ok        bool
 }
 
 // CPUValues struct contains the last cpu-usage values in order to compute properly the current values.
@@ -99,7 +100,7 @@ func (d *DockerStats) Configure(configMap map[string]interface{}) {
 	}
 	cli, err := client.NewEnvClient()
 	if err != nil {
-	  d.log.Warn("Could not create docker client...")
+		d.log.Warn("Could not create docker client...")
 	} else {
 		d.dockerClient = cli
 	}
@@ -133,8 +134,8 @@ func (d *DockerStats) Collect() {
 		return
 	}
 	cfilter := filters.NewArgs()
-    //cfilter.Add("id", task.ContainerID)
-    containers, err := d.dockerClient.ContainerList(context.Background(), types.ContainerListOptions{Filter: cfilter})
+	//cfilter.Add("id", task.ContainerID)
+	containers, err := d.dockerClient.ContainerList(context.Background(), types.ContainerListOptions{Filter: cfilter})
 	if err != nil {
 		d.log.Error("ListContainers() failed: ", err)
 		return
@@ -150,44 +151,26 @@ func (d *DockerStats) Collect() {
 			d.log.Debug("Skip container: ", contName)
 			continue
 		}
-		go d.getDockerContainerInfo(&container)
+		go d.getDockerContainerInfo(container)
 	}
 }
-
-func (d *DockerStats) getContainerStats(ID string) (CntStat) {
-	ok := true
-	body, _ := d.dockerClient.ContainerStats(context.Background(), ID, false)
-	defer body.Close()
-	content, err := ioutil.ReadAll(body)
-	if err != nil {
-		ok = false
-	}
-	var s types.StatsJSON
-	err = json.Unmarshal(content, &s)
-	if err != nil {
-		ok = false
-	}
-	return CntStat{
-		Stats: s,
-		Ok: ok,
-	}
-}
-
 
 // getDockerContainerInfo gets container statistics for the given container.
 // results is a channel to make possible the synchronization between the main process and the gorutines (wait-notify pattern).
-func (d *DockerStats) getDockerContainerInfo(container *types.Container) {
+func (d *DockerStats) getDockerContainerInfo(container types.Container) {
 	statsC := make(chan CntStat, 1)
 	done := make(chan bool, 1)
 
 	go func() {
-		statsC <- d.getContainerStats(container.ID)
+		statsC <- d.getContainerStats(container)
 	}()
 	select {
 	case stats := <-statsC:
 		if !stats.Ok {
 			d.log.Error("Failed to collect docker container stats: ", container.Names)
 			break
+		} else {
+
 		}
 		done <- true
 
@@ -202,23 +185,44 @@ func (d *DockerStats) getDockerContainerInfo(container *types.Container) {
 	}
 }
 
-func (d *DockerStats) extractMetrics(container *types.Container, stats types.StatsJSON) []metric.Metric {
+func (d *DockerStats) getContainerStats(container types.Container) CntStat {
+	d.log.Debug("Inspect: ", container.ID)
+	ok := true
+	body, _ := d.dockerClient.ContainerStats(context.Background(), container.ID, false)
+	defer body.Close()
+	content, err := ioutil.ReadAll(body)
+	if err != nil {
+		ok = false
+	}
+	var s types.StatsJSON
+	err = json.Unmarshal(content, &s)
+	if err != nil {
+		ok = false
+	}
+	return CntStat{
+		Container: container,
+		Stats:     s,
+		Ok:        ok,
+	}
+}
+
+func (d *DockerStats) extractMetrics(container types.Container, stats types.StatsJSON) []metric.Metric {
 	d.mu.Lock()
 	defer d.mu.Unlock()
 	metrics := d.buildMetrics(container, stats)
 	return metrics
 }
 
-func (d DockerStats) diffCPUUsage(pre types.CPUStats, cur types.CPUStats) (types.CPUStats) {
+func (d DockerStats) diffCPUUsage(pre types.CPUStats, cur types.CPUStats) types.CPUStats {
 	var cstat types.CPUStats
 	cstat.SystemUsage = cur.SystemUsage - pre.SystemUsage
 	cstat.ThrottlingData = types.ThrottlingData{
 		// Number of periods with throttling active
-    	Periods: cur.ThrottlingData.Periods - pre.ThrottlingData.Periods,
-    	// Number of periods when the container hits its throttling limit.
-    	ThrottledPeriods: cur.ThrottlingData.ThrottledPeriods - pre.ThrottlingData.ThrottledPeriods,
-    	// Aggregate time the container was throttled for in nanoseconds.
-    	ThrottledTime: cur.ThrottlingData.ThrottledTime - pre.ThrottlingData.ThrottledTime,
+		Periods: cur.ThrottlingData.Periods - pre.ThrottlingData.Periods,
+		// Number of periods when the container hits its throttling limit.
+		ThrottledPeriods: cur.ThrottlingData.ThrottledPeriods - pre.ThrottlingData.ThrottledPeriods,
+		// Aggregate time the container was throttled for in nanoseconds.
+		ThrottledTime: cur.ThrottlingData.ThrottledTime - pre.ThrottlingData.ThrottledTime,
 	}
 	cstat.CPUUsage.TotalUsage = cur.CPUUsage.TotalUsage - pre.CPUUsage.TotalUsage
 	cstat.CPUUsage.UsageInKernelmode = cur.CPUUsage.UsageInKernelmode - pre.CPUUsage.UsageInKernelmode
@@ -230,15 +234,19 @@ func (d DockerStats) diffCPUUsage(pre types.CPUStats, cur types.CPUStats) (types
 	cstat.CPUUsage.PercpuUsage = pCPU
 	return cstat
 }
+
 // buildMetrics creates the actual metrics for the given container.
-func (d DockerStats) buildMetrics(container *types.Container, stat types.StatsJSON) []metric.Metric {
+func (d DockerStats) buildMetrics(container types.Container, stat types.StatsJSON) []metric.Metric {
 	mTime := stat.Read
+	d.log.Debug("Build Metrics for: ", container.Names[0])
 	dCPU := d.diffCPUUsage(stat.PreCPUStats, stat.CPUStats)
 	ret := []metric.Metric{
 		d.buildDockerMetric("cpu.system", metric.Gauge, float64(dCPU.SystemUsage), mTime),
 		d.buildDockerMetric("cpu.throttling.Periods", metric.Gauge, float64(dCPU.ThrottlingData.Periods), mTime),
 		d.buildDockerMetric("cpu.throttling.ThrottledPeriods", metric.Gauge, float64(dCPU.ThrottlingData.ThrottledPeriods), mTime),
 		d.buildDockerMetric("cpu.throttling.ThrottledTime", metric.Gauge, float64(dCPU.ThrottlingData.ThrottledTime), mTime),
+		d.buildDockerMetric("memory.usage", metric.Gauge, float64(stat.MemoryStats.Usage), mTime),
+		d.buildDockerMetric("memory.limit", metric.Gauge, float64(stat.MemoryStats.Limit), mTime),
 	}
 	for idx, c := range dCPU.CPUUsage.PercpuUsage {
 		ret = append(ret, d.buildDockerMetric(fmt.Sprintf("cpu.core%d", idx), metric.Gauge, float64(c), mTime))
@@ -281,7 +289,6 @@ func (d DockerStats) buildDockerMetric(name string, metricType string, value flo
 	}
 	return m
 }
-
 
 func min(x, y int) int {
 	if x < y {

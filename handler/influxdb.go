@@ -84,7 +84,6 @@ func (i *InfluxDB) Configure(configMap map[string]interface{}) {
 	}
 	// Make client
 	addr := fmt.Sprintf("http://%s:%s", i.server, i.port)
-
 	var err error
 	i.influxdb, err = client.NewHTTPClient(client.HTTPConfig{
 		Addr:     addr,
