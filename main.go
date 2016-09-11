@@ -77,12 +77,10 @@ func main() {
 	commandFlags = append(commandFlags, app.Flags...)
 	app.Commands = []cli.Command{
 		{
-			Name:      "visualize",
-			Action:    visualize,
-			Aliases:   []string{"visualise", "vis", "viz"},
-			Flags:     commandFlags,
-			Usage:     "shortest path from your terminal to your graphs",
-			UsageText: "",
+			Name:   "visualize",
+			Action: visualize,
+			Flags:  commandFlags,
+			Usage:  "shortest path from your terminal to your graphs",
 		},
 	}
 	app.Run(os.Args)
