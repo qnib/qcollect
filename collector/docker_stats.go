@@ -10,9 +10,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/docker/engine-api/client"
-	"github.com/docker/engine-api/types"
-	"github.com/docker/engine-api/types/filters"
+	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/filters"
+	"github.com/docker/docker/client"
 	"golang.org/x/net/context"
 
 	l "github.com/Sirupsen/logrus"
@@ -100,7 +100,7 @@ func (d *DockerStats) Configure(configMap map[string]interface{}) {
 	}
 	cli, err := client.NewEnvClient()
 	if err != nil {
-		d.log.Warn("Could not create docker client...")
+		d.log.Warn("Could not create docker client...", err)
 	} else {
 		d.dockerClient = cli
 	}
@@ -229,7 +229,7 @@ func (d DockerStats) diffCPUUsage(pre types.CPUStats, cur types.CPUStats) types.
 	cstat.CPUUsage.UsageInUsermode = cur.CPUUsage.UsageInUsermode - pre.CPUUsage.UsageInUsermode
 	pCPU := cur.CPUUsage.PercpuUsage
 	for idx, c := range pre.CPUUsage.PercpuUsage {
-		pCPU[idx] = pCPU[idx] - c
+		pCPU[idx] = (pCPU[idx] - c) / cstat.SystemUsage
 	}
 	cstat.CPUUsage.PercpuUsage = pCPU
 	return cstat
@@ -241,15 +241,16 @@ func (d DockerStats) buildMetrics(container types.Container, stat types.StatsJSO
 	d.log.Debug("Build Metrics for: ", container.Names[0])
 	dCPU := d.diffCPUUsage(stat.PreCPUStats, stat.CPUStats)
 	ret := []metric.Metric{
-		d.buildDockerMetric("cpu.system", metric.Gauge, float64(dCPU.SystemUsage), mTime),
+		d.buildDockerMetric("cpu.system", metric.Gauge, float64(dCPU.SystemUsage/10000000), mTime),
+		d.buildDockerMetric("cpu.usage", metric.Gauge, float64(dCPU.CPUUsage.TotalUsage/10000000), mTime),
 		d.buildDockerMetric("cpu.throttling.Periods", metric.Gauge, float64(dCPU.ThrottlingData.Periods), mTime),
 		d.buildDockerMetric("cpu.throttling.ThrottledPeriods", metric.Gauge, float64(dCPU.ThrottlingData.ThrottledPeriods), mTime),
-		d.buildDockerMetric("cpu.throttling.ThrottledTime", metric.Gauge, float64(dCPU.ThrottlingData.ThrottledTime), mTime),
+		d.buildDockerMetric("cpu.throttling.ThrottledTime", metric.Gauge, float64(dCPU.ThrottlingData.ThrottledTime/10000000), mTime),
 		d.buildDockerMetric("memory.usage", metric.Gauge, float64(stat.MemoryStats.Usage), mTime),
 		d.buildDockerMetric("memory.limit", metric.Gauge, float64(stat.MemoryStats.Limit), mTime),
 	}
 	for idx, c := range dCPU.CPUUsage.PercpuUsage {
-		ret = append(ret, d.buildDockerMetric(fmt.Sprintf("cpu.core%d", idx), metric.Gauge, float64(c), mTime))
+		ret = append(ret, d.buildDockerMetric(fmt.Sprintf("cpu.ns.core%d", idx), metric.Gauge, float64(c/10000000), mTime))
 	}
 
 	for netiface := range stat.Networks {

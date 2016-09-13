@@ -6,10 +6,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/qnib/qcollect/metric"
-	"github.com/docker/engine-api/client"
-	"github.com/docker/engine-api/types"
 	l "github.com/Sirupsen/logrus"
+	"github.com/docker/docker/api/types"
+	"github.com/qnib/qcollect/metric"
 	"github.com/stretchr/testify/assert"
 )
 

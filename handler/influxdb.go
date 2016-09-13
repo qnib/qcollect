@@ -115,7 +115,7 @@ func (i InfluxDB) convertToInfluxDB(incomingMetric metric.Metric) (datapoint *cl
 }
 
 func (i *InfluxDB) emitMetrics(metrics []metric.Metric) bool {
-	i.log.Info("Starting to emit ", len(metrics), " metrics")
+	i.log.Debug("Starting to emit ", len(metrics), " metrics")
 
 	if len(metrics) == 0 {
 		i.log.Warn("Skipping send because of an empty payload")
