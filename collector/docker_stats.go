@@ -271,6 +271,7 @@ func (d DockerStats) buildMetrics(container types.Container, stat types.StatsJSO
 	}
 
 	if d.blkIO {
+		d.log.Debug("Building BlkIO metrics...")
 		metName := "IoMerged"
 		for _, bs := range stat.BlkioStats.IoMergedRecursive {
 			ret = append(ret, d.buildDockerMetric(fmt.Sprintf("blkio.%s.%s.value", metName, bs.Op), metric.Gauge, float64(bs.Value), mTime))
@@ -306,6 +307,7 @@ func (d DockerStats) buildMetrics(container types.Container, stat types.StatsJSO
 	}
 
 	if d.cpuThrottle {
+		d.log.Debug("Building cpuThrottle metrics...")
 		addCPU := []metric.Metric{
 			d.buildDockerMetric("cpu.throttling.Periods", metric.Gauge, float64(stat.CPUStats.ThrottlingData.Periods), mTime),
 			d.buildDockerMetric("cpu.throttling.ThrottledPeriods", metric.Gauge, float64(stat.CPUStats.ThrottlingData.ThrottledPeriods), mTime),
@@ -315,6 +317,7 @@ func (d DockerStats) buildMetrics(container types.Container, stat types.StatsJSO
 	}
 
 	if d.perCore {
+		d.log.Debug("Building perCore metrics...")
 		for idx, c := range stat.CPUStats.CPUUsage.PercpuUsage {
 			ret = append(ret, d.buildDockerMetric(fmt.Sprintf("cpu.ns.core%d", idx), metric.Gauge, float64(c/10000000), mTime))
 		}

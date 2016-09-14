@@ -9,7 +9,7 @@ if [ -f /etc/os-release ];then
       ID=Linux
       sed -i'' -e "s/version =.*/version = \"${GIT_TAG}\"/" main.go
     else
-      sed -i '' -e 's/version =.*/version = "0.6.4.1"/' main.go
+      sed -i'' -e "s/version =.*/version = \"${GIT_TAG}\"/" main.go
     fi
 else
     ID=$(uname -s)

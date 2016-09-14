@@ -16,7 +16,7 @@ import (
 
 const (
 	name    = "qcollect"
-	version = "devel"
+	version = "0.6.5"
 	desc    = "Diamond compatible metrics collector"
 )
 
