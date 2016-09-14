@@ -1,8 +1,6 @@
 package collector
 
 import (
-	"fmt"
-
 	"github.com/qnib/qcollect/config"
 	"github.com/qnib/qcollect/metric"
 
@@ -54,7 +52,7 @@ func New(name string) Collector {
 	// but with a different canonical name so they can receive different
 	// configs
 	realName := strings.Split(name, " ")[0]
-	fmt.Println(collectorConstructs)
+
 	if f, exists := collectorConstructs[realName]; exists {
 		collector = f(channel, DefaultCollectionInterval, collectorLog)
 	} else {

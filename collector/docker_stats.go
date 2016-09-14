@@ -35,6 +35,8 @@ type DockerStats struct {
 	skipRegex     *regexp.Regexp
 	bufferRegex   *regexp.Regexp
 	endpoint      string
+	perCore       bool
+	cpuThrottle   bool
 	mu            *sync.Mutex
 }
 
@@ -73,6 +75,8 @@ func newDockerStats(channel chan metric.Metric, initialInterval int, log *l.Entr
 	d.mu = new(sync.Mutex)
 
 	d.name = "DockerStats"
+	d.perCore = false
+	d.cpuThrottle = false
 	d.compiledRegex = make(map[string]*Regex)
 	return d
 }
@@ -118,6 +122,16 @@ func (d *DockerStats) Configure(configMap map[string]interface{}) {
 	}
 	if skipRegex, skipExists := configMap["skipContainerRegex"]; skipExists {
 		d.skipRegex = regexp.MustCompile(skipRegex.(string))
+	}
+	if perCore, pcExists := configMap["per-core"]; pcExists {
+		if perCore == "true" {
+			d.perCore = true
+		}
+	}
+	if cpuThrottle, ctExists := configMap["cpu-throttle"]; ctExists {
+		if cpuThrottle == "true" {
+			d.cpuThrottle = true
+		}
 	}
 	if bufferRegex, exists := configMap["bufferRegex"]; exists {
 		d.bufferRegex = regexp.MustCompile(bufferRegex.(string))
@@ -243,14 +257,20 @@ func (d DockerStats) buildMetrics(container types.Container, stat types.StatsJSO
 	ret := []metric.Metric{
 		d.buildDockerMetric("cpu.system", metric.Gauge, float64(dCPU.SystemUsage/10000000), mTime),
 		d.buildDockerMetric("cpu.usage", metric.Gauge, float64(dCPU.CPUUsage.TotalUsage/10000000), mTime),
-		d.buildDockerMetric("cpu.throttling.Periods", metric.Gauge, float64(dCPU.ThrottlingData.Periods), mTime),
-		d.buildDockerMetric("cpu.throttling.ThrottledPeriods", metric.Gauge, float64(dCPU.ThrottlingData.ThrottledPeriods), mTime),
-		d.buildDockerMetric("cpu.throttling.ThrottledTime", metric.Gauge, float64(dCPU.ThrottlingData.ThrottledTime/10000000), mTime),
 		d.buildDockerMetric("memory.usage", metric.Gauge, float64(stat.MemoryStats.Usage), mTime),
 		d.buildDockerMetric("memory.limit", metric.Gauge, float64(stat.MemoryStats.Limit), mTime),
 	}
-	for idx, c := range dCPU.CPUUsage.PercpuUsage {
-		ret = append(ret, d.buildDockerMetric(fmt.Sprintf("cpu.ns.core%d", idx), metric.Gauge, float64(c/10000000), mTime))
+
+	if d.cpuThrottle {
+		ret = append(ret, d.buildDockerMetric("cpu.throttling.Periods", metric.Gauge, float64(dCPU.ThrottlingData.Periods), mTime))
+		ret = append(ret, d.buildDockerMetric("cpu.throttling.ThrottledPeriods", metric.Gauge, float64(dCPU.ThrottlingData.ThrottledPeriods), mTime))
+		ret = append(ret, d.buildDockerMetric("cpu.throttling.ThrottledTime", metric.Gauge, float64(dCPU.ThrottlingData.ThrottledTime/10000000), mTime))
+	}
+
+	if d.perCore {
+		for idx, c := range dCPU.CPUUsage.PercpuUsage {
+			ret = append(ret, d.buildDockerMetric(fmt.Sprintf("cpu.ns.core%d", idx), metric.Gauge, float64(c/10000000), mTime))
+		}
 	}
 
 	for netiface := range stat.Networks {
