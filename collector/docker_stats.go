@@ -213,6 +213,7 @@ func (d *DockerStats) getContainerStats(container types.Container) CntStat {
 	if err != nil {
 		ok = false
 	}
+	s.CPUStats = d.diffCPUUsage(s.PreCPUStats, s.CPUStats)
 	return CntStat{
 		Container: container,
 		Stats:     s,
@@ -253,22 +254,21 @@ func (d DockerStats) diffCPUUsage(pre types.CPUStats, cur types.CPUStats) types.
 func (d DockerStats) buildMetrics(container types.Container, stat types.StatsJSON) []metric.Metric {
 	mTime := stat.Read
 	d.log.Debug("Build Metrics for: ", container.Names[0])
-	dCPU := d.diffCPUUsage(stat.PreCPUStats, stat.CPUStats)
 	ret := []metric.Metric{
-		d.buildDockerMetric("cpu.system", metric.Gauge, float64(dCPU.SystemUsage/10000000), mTime),
-		d.buildDockerMetric("cpu.usage", metric.Gauge, float64(dCPU.CPUUsage.TotalUsage/10000000), mTime),
+		d.buildDockerMetric("cpu.system", metric.Gauge, float64(stat.CPUStats.SystemUsage/10000000), mTime),
+		d.buildDockerMetric("cpu.usage", metric.Gauge, float64(stat.CPUStats.CPUUsage.TotalUsage/10000000), mTime),
 		d.buildDockerMetric("memory.usage", metric.Gauge, float64(stat.MemoryStats.Usage), mTime),
 		d.buildDockerMetric("memory.limit", metric.Gauge, float64(stat.MemoryStats.Limit), mTime),
 	}
 
 	if d.cpuThrottle {
-		ret = append(ret, d.buildDockerMetric("cpu.throttling.Periods", metric.Gauge, float64(dCPU.ThrottlingData.Periods), mTime))
-		ret = append(ret, d.buildDockerMetric("cpu.throttling.ThrottledPeriods", metric.Gauge, float64(dCPU.ThrottlingData.ThrottledPeriods), mTime))
-		ret = append(ret, d.buildDockerMetric("cpu.throttling.ThrottledTime", metric.Gauge, float64(dCPU.ThrottlingData.ThrottledTime/10000000), mTime))
+		ret = append(ret, d.buildDockerMetric("cpu.throttling.Periods", metric.Gauge, float64(stat.CPUStats.ThrottlingData.Periods), mTime))
+		ret = append(ret, d.buildDockerMetric("cpu.throttling.ThrottledPeriods", metric.Gauge, float64(stat.CPUStats.ThrottlingData.ThrottledPeriods), mTime))
+		ret = append(ret, d.buildDockerMetric("cpu.throttling.ThrottledTime", metric.Gauge, float64(stat.CPUStats.ThrottlingData.ThrottledTime/10000000), mTime))
 	}
 
 	if d.perCore {
-		for idx, c := range dCPU.CPUUsage.PercpuUsage {
+		for idx, c := range stat.CPUStats.CPUUsage.PercpuUsage {
 			ret = append(ret, d.buildDockerMetric(fmt.Sprintf("cpu.ns.core%d", idx), metric.Gauge, float64(c/10000000), mTime))
 		}
 	}
