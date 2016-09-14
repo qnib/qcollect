@@ -37,6 +37,7 @@ type DockerStats struct {
 	endpoint      string
 	perCore       bool
 	cpuThrottle   bool
+	blkIO         bool
 	mu            *sync.Mutex
 }
 
@@ -77,6 +78,7 @@ func newDockerStats(channel chan metric.Metric, initialInterval int, log *l.Entr
 	d.name = "DockerStats"
 	d.perCore = false
 	d.cpuThrottle = false
+	d.blkIO = false
 	d.compiledRegex = make(map[string]*Regex)
 	return d
 }
@@ -131,6 +133,11 @@ func (d *DockerStats) Configure(configMap map[string]interface{}) {
 	if cpuThrottle, ctExists := configMap["cpu-throttle"]; ctExists {
 		if cpuThrottle == "true" {
 			d.cpuThrottle = true
+		}
+	}
+	if blkIO, blkExists := configMap["block-io"]; blkExists {
+		if blkIO == "true" {
+			d.blkIO = true
 		}
 	}
 	if bufferRegex, exists := configMap["bufferRegex"]; exists {
@@ -263,10 +270,48 @@ func (d DockerStats) buildMetrics(container types.Container, stat types.StatsJSO
 		d.buildDockerMetric("pid.limit", metric.Gauge, float64(stat.PidsStats.Limit), mTime),
 	}
 
+	if d.blkIO {
+		metName := "IoMerged"
+		for _, bs := range stat.BlkioStats.IoMergedRecursive {
+			ret = append(ret, d.buildDockerMetric(fmt.Sprintf("blkio.%s.%s.value", metName, bs.Op), metric.Gauge, float64(bs.Value), mTime))
+		}
+		metName = "IoQueued"
+		for _, bs := range stat.BlkioStats.IoQueuedRecursive {
+			ret = append(ret, d.buildDockerMetric(fmt.Sprintf("blkio.%s.%s.value", metName, bs.Op), metric.Gauge, float64(bs.Value), mTime))
+		}
+		metName = "IoServiceBytes"
+		for _, bs := range stat.BlkioStats.IoServiceBytesRecursive {
+			ret = append(ret, d.buildDockerMetric(fmt.Sprintf("blkio.%s.%s.value", metName, bs.Op), metric.Gauge, float64(bs.Value), mTime))
+		}
+		metName = "IoServiceTime"
+		for _, bs := range stat.BlkioStats.IoServiceTimeRecursive {
+			ret = append(ret, d.buildDockerMetric(fmt.Sprintf("blkio.%s.%s.value", metName, bs.Op), metric.Gauge, float64(bs.Value), mTime))
+		}
+		metName = "IoServiced"
+		for _, bs := range stat.BlkioStats.IoServicedRecursive {
+			ret = append(ret, d.buildDockerMetric(fmt.Sprintf("blkio.%s.%s.value", metName, bs.Op), metric.Gauge, float64(bs.Value), mTime))
+		}
+		metName = "IoTime"
+		for _, bs := range stat.BlkioStats.IoTimeRecursive {
+			ret = append(ret, d.buildDockerMetric(fmt.Sprintf("blkio.%s.%s.value", metName, bs.Op), metric.Gauge, float64(bs.Value), mTime))
+		}
+		metName = "IoWaitTime"
+		for _, bs := range stat.BlkioStats.IoWaitTimeRecursive {
+			ret = append(ret, d.buildDockerMetric(fmt.Sprintf("blkio.%s.%s.value", metName, bs.Op), metric.Gauge, float64(bs.Value), mTime))
+		}
+		metName = "Sectors"
+		for _, bs := range stat.BlkioStats.SectorsRecursive {
+			ret = append(ret, d.buildDockerMetric(fmt.Sprintf("blkio.%s.%s.value", metName, bs.Op), metric.Gauge, float64(bs.Value), mTime))
+		}
+	}
+
 	if d.cpuThrottle {
-		ret = append(ret, d.buildDockerMetric("cpu.throttling.Periods", metric.Gauge, float64(stat.CPUStats.ThrottlingData.Periods), mTime))
-		ret = append(ret, d.buildDockerMetric("cpu.throttling.ThrottledPeriods", metric.Gauge, float64(stat.CPUStats.ThrottlingData.ThrottledPeriods), mTime))
-		ret = append(ret, d.buildDockerMetric("cpu.throttling.ThrottledTime", metric.Gauge, float64(stat.CPUStats.ThrottlingData.ThrottledTime/10000000), mTime))
+		addCPU := []metric.Metric{
+			d.buildDockerMetric("cpu.throttling.Periods", metric.Gauge, float64(stat.CPUStats.ThrottlingData.Periods), mTime),
+			d.buildDockerMetric("cpu.throttling.ThrottledPeriods", metric.Gauge, float64(stat.CPUStats.ThrottlingData.ThrottledPeriods), mTime),
+			d.buildDockerMetric("cpu.throttling.ThrottledTime", metric.Gauge, float64(stat.CPUStats.ThrottlingData.ThrottledTime/10000000), mTime),
+		}
+		ret = append(ret, addCPU...)
 	}
 
 	if d.perCore {
