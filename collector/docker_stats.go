@@ -259,6 +259,8 @@ func (d DockerStats) buildMetrics(container types.Container, stat types.StatsJSO
 		d.buildDockerMetric("cpu.usage", metric.Gauge, float64(stat.CPUStats.CPUUsage.TotalUsage/10000000), mTime),
 		d.buildDockerMetric("memory.usage", metric.Gauge, float64(stat.MemoryStats.Usage), mTime),
 		d.buildDockerMetric("memory.limit", metric.Gauge, float64(stat.MemoryStats.Limit), mTime),
+		d.buildDockerMetric("pid.current", metric.Gauge, float64(stat.PidsStats.Current), mTime),
+		d.buildDockerMetric("pid.limit", metric.Gauge, float64(stat.PidsStats.Limit), mTime),
 	}
 
 	if d.cpuThrottle {
