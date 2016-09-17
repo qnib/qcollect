@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
+	"io"
 	"net"
 	"regexp"
 	"strconv"
@@ -18,8 +19,10 @@ import (
 const (
 	//DefaultOpenTSDBCollectorPort is the TCP port that OpenTSDB clients will push data to
 	DefaultOpenTSDBCollectorPort = "4242"
-	// MetricRegex provides the default OpenTSDB regex
-	MetricRegex = `put (?P<name>[0-9\.\-\_a-zA-Z]+)\s+(?P<dimensions>[0-9\.\-\_\=\,a-zA-Z]+)\s+(?P<time>\d+)\s+(?P<value>[0-9\.]+)`
+	// metReg1 handles according to the OpenTSDB website: http://opentsdb.net/docs/build/html/user_guide/writing.html
+	metReg1 = `(?P<dimensions>[0-9\.\-\_\=\,a-zA-Z]+)\s+(?P<time>\d+)\s+(?P<value>[0-9\.]+)`
+	// metReg2 consumes metrics according to InfluxDB
+	metReg2 = `(?P<time>\d+)\s+(?P<value>[\-0-9\.]+)\s+(?P<dimensions>[0-9\.\-\_\=\,a-zA-Z]+)`
 )
 
 // OpenTSDB collector type
@@ -56,6 +59,7 @@ func (c *OpenTSDB) Configure(configMap map[string]interface{}) {
 	if port, exists := configMap["port"]; exists {
 		c.port = port.(string)
 	}
+	MetricRegex := fmt.Sprintf(`(put\s+)?(?P<name>[0-9\.\-\_a-zA-Z]+)\s+(%s|%s)`, metReg1, metReg2)
 	if regex, exists := configMap["metric-regex"]; exists {
 		c.metricRegex = regexp.MustCompile(regex.(string))
 	} else {
@@ -105,11 +109,14 @@ func (c *OpenTSDB) readOpenTSDBMetrics(conn *net.TCPConn) {
 	c.log.Info("Connection started: ", conn.RemoteAddr())
 	for {
 		line, err := reader.ReadBytes('\n')
-		if err != nil {
-			c.log.Warn("Error while reading OpenTSDB metrics", err)
+		if err == io.EOF {
 			break
 		}
-		c.log.Debug("Read: ", line)
+		if err != nil {
+			c.log.Warn("Error while reading OpenTSDB metrics: ", err)
+			break
+		}
+		c.log.Debug("Read: ", bytes.NewBuffer(line).String())
 		c.incoming <- bytes.NewBuffer(line).String()
 	}
 	c.log.Info("Connection closed: ", conn.RemoteAddr())
@@ -136,18 +143,23 @@ func (c *OpenTSDB) parseMetric(line string) (metric.Metric, bool) {
 		msg := fmt.Sprintf("could not match '%s' against regex", line)
 		return metric.New(msg), false
 	}
+	names := c.metricRegex.SubexpNames()
+	md := map[string]string{}
+	for idx, n := range match {
+		md[names[idx]] = n
+	}
 	dims := map[string]string{}
-	for _, item := range strings.Split(match[2], ",") {
+	for _, item := range strings.Split(md["dimensions"], ",") {
 		i := strings.Split(item, "=")
 		dims[i[0]] = i[1]
 	}
-	i, err := strconv.ParseInt(match[3], 10, 64)
+	i, err := strconv.ParseInt(md["time"], 10, 64)
 	if err != nil {
-		msg := fmt.Sprintf("Not an UNIX epoch '%s'", match[3])
+		msg := fmt.Sprintf("Not an UNIX epoch '%s'", md["time"])
 		return metric.New(msg), false
 	}
 	tm := time.Unix(i, 0)
-	v, _ := strconv.Atoi(match[4])
-	m := metric.NewExt(match[1], "gauge", float64(v), dims, tm, false)
+	v, _ := strconv.Atoi(md["value"])
+	m := metric.NewExt(md["name"], "gauge", float64(v), dims, tm, false)
 	return m, true
 }
