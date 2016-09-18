@@ -22,11 +22,7 @@ fi
 go get -d
 go get github.com/pkg/errors github.com/stretchr/testify/assert
 
-#mkdir -p coverity
-#gom test -cover ./... |grep coverage |sed -e 's#github.com/qnib/##' |awk '{print $2" "$5}' > ./resources/coverity/cover_cur.out
-#./cover.plt > ./resources/coverity/cover_$(git describe --abbrev=0 --tags).png
-#mv ./resources/coverity/cover_cur.out ./resources/coverity/cover_$(git describe --abbrev=0 --tags).out
-rm -f ./bin/qcollect_$(git describe --abbrev=0 --tags)_${ID}
+rm -f ./bin/qcollect_${GIT_TAG}_${ID}
 go build -o ./bin/qcollect_${GIT_TAG}_${ID}
 mv main.go.bkp main.go
 rm -f ./bin/qcollect_latest_${ID}

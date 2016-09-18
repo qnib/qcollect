@@ -1,7 +1,7 @@
-all: local alpine linux
+all: local test alpine linux
 
 test:
-	gom test -cover ./...
+	./test.sh
 
 local:
 	./build.sh
