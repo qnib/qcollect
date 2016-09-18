@@ -1,16 +1,11 @@
 package collector
 
 import (
-	"fmt"
 	"net"
 	"testing"
 	"time"
 
-	"github.com/qnib/qcollect/test_utils"
-
-	"github.com/qnib/qcollect/metric"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestOpenTSDBConfigureEmptyConfig(t *testing.T) {
@@ -38,6 +33,7 @@ func TestOpenTSDBConfigure(t *testing.T) {
 	assert.Equal(c.Port(), "4242", "should be the defined port")
 }
 
+/*
 func TestOpenTSBDCollect(t *testing.T) {
 	config := make(map[string]interface{})
 	config["port"] = "0"
@@ -80,6 +76,7 @@ func TestParseOpenTSDBMetric(t *testing.T) {
 	assert.True(t, m.IsFiltered(f), "Filter should map metric")
 
 }
+*/
 
 func TestInvalidOpenTSDBToMetric(t *testing.T) {
 	rawData := "put 1356998400 host=webserver01,cpu=0 1"
