@@ -209,9 +209,8 @@ func (d *DockerStats) getDockerContainerInfo(container types.Container) {
 func (d *DockerStats) getContainerStats(container types.Container) CntStat {
 	d.log.Debug("Inspect: ", container.ID)
 	ok := true
-	body, _ := d.dockerClient.ContainerStats(context.Background(), container.ID, false)
-	defer body.Close()
-	content, err := ioutil.ReadAll(body)
+	stat, err := d.dockerClient.ContainerStats(context.Background(), container.ID, false)
+	content, err := ioutil.ReadAll(stat.Body)
 	if err != nil {
 		ok = false
 	}
