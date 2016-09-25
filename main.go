@@ -25,7 +25,7 @@ var log = logrus.WithFields(logrus.Fields{"app": "qcollect"})
 func initLogrus(ctx *cli.Context) {
 	logrus.SetFormatter(&logrus.TextFormatter{
 		DisableColors:   true,
-		TimestampFormat: time.RFC822,
+		TimestampFormat: time.RFC3339Nano,
 		FullTimestamp:   true,
 	})
 
