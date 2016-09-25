@@ -1,0 +1,154 @@
+{
+  "status": 200,
+  "timestamp": 1457544442,
+  "value": {
+    "kafka.server:name=NumGroups,type=OffsetManager": {
+      "Value": 0
+    },
+    "kafka.server:name=ExpiresPerSecond,type=DelayedProducerRequestMetrics": {
+      "MeanRate": 0.0,
+      "FiveMinuteRate": 0.0,
+      "Count": 0,
+      "FifteenMinuteRate": 0.0,
+      "EventType": "requests",
+      "OneMinuteRate": 0.0,
+      "RateUnit": "SECONDS"
+    },
+    "kafka.server:name=RequestHandlerAvgIdlePercent,type=KafkaRequestHandlerPool": {
+      "MeanRate": 0.999154465703156,
+      "FiveMinuteRate": 0.979446184907488,
+      "Count": 84382006897,
+      "FifteenMinuteRate": 0.975788278386156,
+      "EventType": "percent",
+      "OneMinuteRate": 0.9920596720992548,
+      "RateUnit": "NANOSECONDS"
+    },
+    "kafka.server:name=MessagesInPerSec,topic=foobar,type=BrokerTopicMetrics": {
+      "MeanRate": 0.0,
+      "FiveMinuteRate": 0.0,
+      "Count": 0,
+      "FifteenMinuteRate": 0.0,
+      "EventType": "messages",
+      "OneMinuteRate": 0.0,
+      "RateUnit": "SECONDS"
+    },
+    "kafka.server:name=PurgatorySize,type=ProducerRequestPurgatory": {
+      "Value": 0
+    },
+    "kafka.server:name=BytesRejectedPerSec,type=BrokerTopicMetrics": {
+      "MeanRate": 0.0,
+      "FiveMinuteRate": 0.0,
+      "Count": 0,
+      "FifteenMinuteRate": 0.0,
+      "EventType": "bytes",
+      "OneMinuteRate": 0.0,
+      "RateUnit": "SECONDS"
+    },
+    "kafka.server:name=BytesInPerSec,type=BrokerTopicMetrics": {
+      "MeanRate": 0.0,
+      "FiveMinuteRate": 0.0,
+      "Count": 0,
+      "FifteenMinuteRate": 0.0,
+      "EventType": "bytes",
+      "OneMinuteRate": 0.0,
+      "RateUnit": "SECONDS"
+    },
+    "kafka.server:name=PartitionCount,type=ReplicaManager": {
+      "Value": 0
+    },
+    "kafka.server:name=FollowerExpiresPerSecond,type=DelayedFetchRequestMetrics": {
+      "MeanRate": 0.0,
+      "FiveMinuteRate": 0.0,
+      "Count": 0,
+      "FifteenMinuteRate": 0.0,
+      "EventType": "requests",
+      "OneMinuteRate": 0.0,
+      "RateUnit": "SECONDS"
+    },
+    "kafka.server:name=FailedFetchRequestsPerSec,type=BrokerTopicMetrics": {
+      "MeanRate": 0.0,
+      "FiveMinuteRate": 0.0,
+      "Count": 0,
+      "FifteenMinuteRate": 0.0,
+      "EventType": "requests",
+      "OneMinuteRate": 0.0,
+      "RateUnit": "SECONDS"
+    },
+    "kafka.server:name=IsrShrinksPerSec,type=ReplicaManager": {
+      "MeanRate": 0.0,
+      "FiveMinuteRate": 0.0,
+      "Count": 0,
+      "FifteenMinuteRate": 0.0,
+      "EventType": "shrinks",
+      "OneMinuteRate": 0.0,
+      "RateUnit": "SECONDS"
+    },
+    "kafka.server:name=NumDelayedRequests,type=ProducerRequestPurgatory": {
+      "Value": 0
+    },
+    "kafka.server:name=BrokerState,type=KafkaServer{4:2}": {
+      "Value": 4
+    },
+    "kafka.server:name=UnderReplicatedPartitions,type=ReplicaManager": {
+      "Value": 0
+    },
+    "kafka.server:name=FailedProduceRequestsPerSec,type=BrokerTopicMetrics": {
+      "MeanRate": 0.0,
+      "FiveMinuteRate": 0.0,
+      "Count": 0,
+      "FifteenMinuteRate": 0.0,
+      "EventType": "requests",
+      "OneMinuteRate": 0.0,
+      "RateUnit": "SECONDS"
+    },
+    "kafka.server:name=NumDelayedRequests,type=FetchRequestPurgatory": {
+      "Value": 0
+    },
+    "kafka.server:clientId=Replica,name=MaxLag,type=ReplicaFetcherManager": {
+      "Value": 0
+    },
+    "kafka.server:name=ConsumerExpiresPerSecond,type=DelayedFetchRequestMetrics": {
+      "MeanRate": 0.0,
+      "FiveMinuteRate": 0.0,
+      "Count": 0,
+      "FifteenMinuteRate": 0.0,
+      "EventType": "requests",
+      "OneMinuteRate": 0.0,
+      "RateUnit": "SECONDS"
+    },
+    "kafka.server:name=LeaderCount,type=ReplicaManager": {
+      "Value": 0
+    },
+    "kafka.server:clientId=Replica,name=MinFetchRate,type=ReplicaFetcherManager": {
+      "Value": 0.0
+    },
+    "kafka.server:name=NumOffsets,type=OffsetManager": {
+      "Value": 0
+    },
+    "kafka.server:name=IsrExpandsPerSec,type=ReplicaManager": {
+      "MeanRate": 0.0,
+      "FiveMinuteRate": 0.0,
+      "Count": 0,
+      "FifteenMinuteRate": 0.0,
+      "EventType": "expands",
+      "OneMinuteRate": 0.0,
+      "RateUnit": "SECONDS"
+    },
+    "kafka.server:name=PurgatorySize,type=FetchRequestPurgatory": {
+      "Value": 0
+    },
+    "kafka.server:name=BytesOutPerSec,type=BrokerTopicMetrics": {
+      "MeanRate": 0.0,
+      "FiveMinuteRate": 0.0,
+      "Count": 0,
+      "FifteenMinuteRate": 0.0,
+      "EventType": "bytes",
+      "OneMinuteRate": 0.0,
+      "RateUnit": "SECONDS"
+    }
+  },
+  "request": {
+    "type": "read",
+    "mbean": "kafka.server:*"
+  }
+}

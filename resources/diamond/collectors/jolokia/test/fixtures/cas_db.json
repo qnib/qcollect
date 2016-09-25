@@ -1,0 +1,12 @@
+{
+  "status": 200,
+  "timestamp": 1458303244,
+  "value": {
+    "type=StorageService": "1",
+    "type=StorageProxy": "1"
+  },
+  "request": {
+    "type": "list",
+    "path": "org.apache.cassandra.db"
+  }
+}

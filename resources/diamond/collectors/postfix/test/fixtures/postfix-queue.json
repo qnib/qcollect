@@ -1,0 +1,39 @@
+{
+  "local": {},
+  "relay_clients": {
+    "sendgrid": {
+      "192.168.0.1": 38,
+      "192.168.0.2": 77
+    },
+    "sendgrid-high": {
+      "192.168.1.1": 10,
+      "192.168.1.2": 20
+    }
+  },
+  "recv": {
+    "status": {},
+    "all": 1042,
+    "resp_codes": {}
+  },
+  "send": {
+    "status": {
+      "sent": 1041
+    },
+    "relay_status": {
+      "sendgrid": {
+        "sent": 542
+      },
+      "sendgrid-high": {
+        "sent": 499
+      }
+    },
+    "resp_codes": {
+      "2.0.0": 1041
+    }
+  },
+  "in": {
+    "status": {},
+    "queue": {},
+    "resp_codes": {}
+  }
+}
