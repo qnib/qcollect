@@ -28,26 +28,19 @@ func pContains(t *testing.T, metrics []metric.Metric, other metric.Metric) bool 
 	return true
 }
 
-func getProSUT() *Prometheus {
-	expectedChan := make(chan metric.Metric)
-	var expectedLogger = defaultLog.WithFields(l.Fields{"collector": "qcollect"})
-
-	return newPrometheus(expectedChan, 10, expectedLogger).(*Prometheus)
-}
-
 func TestPrometheusNewPrometheus(t *testing.T) {
 	expectedChan := make(chan metric.Metric)
 	var expectedLogger = defaultLog.WithFields(l.Fields{"collector": "qcollect"})
 	//expectedType := make(map[string]*CPUValues)
 
-	c := newPrometheus(expectedChan, 10, expectedLogger).(*DockerStats)
+	c := newPrometheus(expectedChan, 10, expectedLogger).(*Prometheus)
 
 	assert.Equal(t, c.log, expectedLogger)
 	assert.Equal(t, c.channel, expectedChan)
 	assert.Equal(t, c.interval, 10)
 	assert.Equal(t, c.name, "Prometheus")
 	c.Configure(make(map[string]interface{}))
-	assert.Equal(t, c.GetEndpoint(), endpoint)
+	assert.Equal(t, c.GetEndpoint(), pEndpoint)
 }
 
 func TestPrometheusConfigureEmptyConfig(t *testing.T) {

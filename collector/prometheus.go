@@ -8,7 +8,6 @@ import (
     "log"
     "os"
 
-
     p2jm "github.com/qnib/prom2json/lib"
 	dto "github.com/prometheus/client_model/go"
 	l "github.com/Sirupsen/logrus"
@@ -16,7 +15,7 @@ import (
 )
 
 const (
-	pEndpoint = "http:///var/run/docker.sock"
+	pEndpoint = "http://localhost:3376"
 )
 
 // Prometheus collector type.
@@ -43,6 +42,11 @@ func newPrometheus(channel chan metric.Metric, initialInterval int, log *l.Entry
 
 	p.name = "Prometheus"
 	return p
+}
+
+// GetEndpoint Returns endpoint of instance
+func (p *Prometheus) GetEndpoint() string {
+	return p.endpoint
 }
 
 // Configure takes a dictionary of values with which the handler can configure itself.
