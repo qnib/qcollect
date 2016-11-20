@@ -336,7 +336,8 @@ func (d DockerStats) buildMetrics(container types.Container, stat types.StatsJSO
 		"container_name": strings.TrimPrefix(container.Names[0], "/"),
 	}
 	for k, v := range container.Labels {
-		additionalDimensions[k] = v
+		key := strings.Replace(k, ".", "_", -1)
+		additionalDimensions[key] = v
 	}
 	metric.AddToAll(&ret, additionalDimensions)
 	return ret
