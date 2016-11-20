@@ -156,7 +156,7 @@ func (d *DockerStats) Collect() {
 	}
 	cfilter := filters.NewArgs()
 	//cfilter.Add("id", task.ContainerID)
-	containers, err := d.dockerClient.ContainerList(context.Background(), types.ContainerListOptions{Filter: cfilter})
+	containers, err := d.dockerClient.ContainerList(context.Background(), types.ContainerListOptions{Filters: cfilter})
 	if err != nil {
 		d.log.Error("ListContainers() failed: ", err)
 		return
