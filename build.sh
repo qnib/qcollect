@@ -12,7 +12,11 @@ if [ $? -ne 0 ];then
         ## commit since tags
         CNT_ALL=$(git log --oneline |wc -l)
         CNT_COMMITS=$(echo "${CNT_ALL}-$(git log --oneline ${GIT_ORG_TAG} |wc -l)" |bc)
-        GIT_TAG="${GIT_TAG}-${CNT_COMMITS}"
+        if [ ${CNT_COMMITS} -ne 0 ];then
+            GIT_TAG="${GIT_TAG}-${CNT_COMMITS}"
+        else
+            GIT_TAG="${GIT_ORG_TAG}"
+        fi
     fi
 fi
 
