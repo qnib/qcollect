@@ -224,11 +224,11 @@
 			"revisionTime": "2016-05-04T13:01:55Z"
 		},
 		{
-			"checksumSHA1": "pancewZW3HwGvpDwfH5Imrbadc4=",
+			"checksumSHA1": "9QKY4bQlbQ/VZZFP8/1WtH4b0mA=",
 			"origin": "github.com/docker/docker/vendor/golang.org/x/net/context",
 			"path": "golang.org/x/net/context",
-			"revision": "b797637b7aeeed133049c7281bfa31dcc9ca42d6",
-			"revisionTime": "2016-04-22T22:19:27Z"
+			"revision": "88a45c4a1bd7bcf6a0bc4eab9a6b4bd7ddae67be",
+			"revisionTime": "2016-11-17T19:08:33Z"
 		},
 		{
 			"checksumSHA1": "EJMLw8rk55bsqmIpSMtVORJpSGo=",

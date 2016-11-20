@@ -36,8 +36,8 @@ fi
 if [ ! -d ${GOPATH}/src/github.com/davecheney/profile ];then
     git clone https://github.com/davecheney/profile.git ${GOPATH}/src/github.com/davecheney/profile
 fi
-go get -d
-go get github.com/pkg/errors github.com/stretchr/testify/assert
+
+govendor sync
 
 rm -f ./bin/qcollect_${GIT_TAG}_${ID}
 go build -o ./bin/qcollect_${GIT_TAG}_${ID}
