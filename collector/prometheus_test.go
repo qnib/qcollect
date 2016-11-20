@@ -61,3 +61,5 @@ func TestPrometheusConfigure(t *testing.T) {
 
 	assert.Equal(t, 9999, c.Interval())
 }
+
+//func TestPrometheusCollect(t *testing.T) {

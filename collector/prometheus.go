@@ -1,12 +1,13 @@
 package collector
 
 import (
-	"encoding/json"
+	//"encoding/json"
 	"fmt"
 	"reflect"
 	"sync"
-    "log"
-    "os"
+    "strconv"
+    //"log"
+    //"os"
 
     p2jm "github.com/qnib/prom2json/lib"
 	dto "github.com/prometheus/client_model/go"
@@ -15,7 +16,7 @@ import (
 )
 
 const (
-	pEndpoint = "http://localhost:3376"
+	pEndpoint = "http://localhost:3376/metrics"
 )
 
 // Prometheus collector type.
@@ -28,10 +29,10 @@ type Prometheus struct {
 
 
 func init() {
-	RegisterCollector("DockerStats", newDockerStats)
+	RegisterCollector("Prometheus", newPrometheus)
 }
 
-// newPrometheus creates a new DockerStats collector.
+// newPrometheus creates a new Prometheus collector.
 func newPrometheus(channel chan metric.Metric, initialInterval int, log *l.Entry) Collector {
     p := new(Prometheus)
 
@@ -65,50 +66,48 @@ func (p *Prometheus) Configure(configMap map[string]interface{}) {
 
 // Collect fetches the endpoint and adds it to the channel
 func (p *Prometheus) Collect() {
-	//families := p.getPrometheusMetrics()
-	/*if err != nil {
-		p.log.Error("Error while collecting metrics: ", err)
-		return
-	}*/
-	m := metric.New("test")
-	m.Value = 1
-	/*
-    metric.AddDimension("model", model)
-
-    for mf := range families {
-	    p.Channel() <- familyToMetric(mf)
-	    p.log.Debug(mf)
-    }*/
-    p.Channel() <- m
-}
-
-func familyToMetric(mf p2jm.Family) (metric.Metric) {
-    m := metric.New(mf.Name)
-    /*if mf.Type == "GAUGE" {
-        m.Value = mf.Metrics[0].Value
-    } else if mf.Type == "COUNTER" {
-        m.Value = mf.Metrics[0].Value
-    }*/
-    return m
-}
-
-// getPrometheusMetrics reads endpoint and parses it
-func (p *Prometheus) getPrometheusMetrics() ([]*p2jm.Family) {
     mfChan := make(chan *dto.MetricFamily, 1024)
-
 	go p2jm.FetchMetricFamilies(p.endpoint, mfChan)
-
-	result := []*p2jm.Family{}
+    var f *p2jm.Family
     for mf := range mfChan {
-		result = append(result, p2jm.NewFamily(mf))
-	}
-	json, err := json.Marshal(result)
-	if err != nil {
-		log.Fatalln("error marshaling JSON:", err)
-	}
-	if _, err := os.Stdout.Write(json); err != nil {
-		log.Fatalln("error writing to stdout:", err)
-	}
-	fmt.Println()
-    return result
+        f = p2jm.NewFamily(mf)
+        m := metric.New(f.Name)
+        m.MetricType = f.Type
+        if f.Type == "GAUGE" {
+            m.Value, _ = strconv.ParseFloat(f.Metrics[0].(p2jm.Metric).Value, 64)
+        } else if f.Type == "COUNTER" {
+            m.Value, _ = strconv.ParseFloat(f.Metrics[0].(p2jm.Metric).Value, 64)
+        } else if f.Type == "SUMMARY" {
+            m = metric.New(fmt.Sprintf("%s_sum", f.Name))
+            mc := metric.New(fmt.Sprintf("%s_count", f.Name))
+            m.MetricType = f.Type
+            mc.MetricType = f.Type
+            s := f.Metrics[0].(p2jm.Summary)
+            for k,v := range s.Labels {
+                m.AddDimension(k, v)
+                mc.AddDimension(k, v)
+            }
+            for qk, qv := range s.Quantiles {
+                mTemp := metric.New(fmt.Sprintf("%s_q%s", f.Name, qk))
+                mTemp.MetricType = "QUANTILE"
+                for lk,lv := range s.Labels {
+                    mTemp.AddDimension(lk, lv)
+                }
+                mTemp.Value, _ = strconv.ParseFloat(qv, 64)
+                p.Channel() <- mTemp
+            }
+            m.Value, _ = strconv.ParseFloat(s.Sum, 64)
+            mc.Value, _ = strconv.ParseFloat(s.Count, 64)
+            p.Channel() <- mc
+        /*} else if f.Type == "HISTOGRAM" {
+            //create histogram metrics?
+            continue
+        */
+        } else {
+            p.log.Debugf("Dunno what to do with '%s'", f.Type)
+            continue
+        }
+        p.Channel() <- m
+
+    }
 }
