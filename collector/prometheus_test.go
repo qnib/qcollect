@@ -50,16 +50,23 @@ func TestPrometheusConfigureEmptyConfig(t *testing.T) {
 	c.Configure(config)
 
 	assert.Equal(t, 123, c.Interval())
+    assert.Equal(t, "http://localhost:3376/metrics", c.GetEndpoint())
+
 }
 
 func TestPrometheusConfigure(t *testing.T) {
 	config := make(map[string]interface{})
 	config["interval"] = 9999
+    config["prometheusEndpoint"] = "http://localhost:13376/metrics"
 
 	c := newPrometheus(nil, 123, nil).(*Prometheus)
 	c.Configure(config)
 
 	assert.Equal(t, 9999, c.Interval())
+    assert.Equal(t, "http://localhost:13376/metrics", c.GetEndpoint())
 }
 
+/*func TestTransformMetric(t *testing.T) {
+
+}*/
 //func TestPrometheusCollect(t *testing.T) {
