@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	l "github.com/Sirupsen/logrus"
+	"github.com/docker/docker/api/types"
 	"github.com/qnib/qcollect/metric"
 	"github.com/stretchr/testify/assert"
 )
@@ -62,11 +63,80 @@ func TestDockerStatsConfigureEmptyConfig(t *testing.T) {
 func TestDockerStatsConfigure(t *testing.T) {
 	config := make(map[string]interface{})
 	config["interval"] = 9999
-
+	config["dockerStatsTimeout"] = 123
+	config["dockerEndPoint"] = ":2376"
+	config["per-core"] = "true"
+	config["cpu-throttle"] = "true"
+	config["block-io"] = "true"
+	config["bufferRegex"] = "TestReg"
+	config["skipContainerRegex"] = "SkipReg"
 	d := newDockerStats(nil, 123, nil).(*DockerStats)
 	d.Configure(config)
 
 	assert.Equal(t, 9999, d.Interval())
+	assert.Equal(t, 123, d.GetStatsTimeout())
+	assert.Equal(t, ":2376", d.GetEndpoint())
+	assert.Equal(t, "TestReg", d.GetBufferRegex())
+	assert.Equal(t, "SkipReg", d.GetSkipRegex())
+}
+
+func TestMin(t *testing.T) {
+	assert.Equal(t, 1, min(1, 2))
+	assert.Equal(t, 1, min(2, 1))
+}
+
+func TestDiffCPUUsage(t *testing.T) {
+	pre := types.CPUUsage{
+		TotalUsage:        1000,
+		UsageInKernelmode: 200,
+		UsageInUsermode:   800,
+		PercpuUsage: []uint64{
+			600,
+			200,
+		},
+	}
+	cur := types.CPUUsage{
+		TotalUsage:        1100,
+		UsageInKernelmode: 300,
+		UsageInUsermode:   800,
+		PercpuUsage: []uint64{
+			600,
+			300,
+		},
+	}
+	diff := types.CPUUsage{
+		TotalUsage:        100,
+		UsageInKernelmode: 100,
+		UsageInUsermode:   0,
+		PercpuUsage: []uint64{
+			0,
+			1,
+		},
+	}
+	d := newDockerStats(nil, 123, nil).(*DockerStats)
+	got := d.DiffCPUUsage(pre, cur, 100)
+	assert.Equal(t, diff, got)
+}
+
+func TestDiffThrottlingData(t *testing.T) {
+	pre := types.ThrottlingData{
+		Periods:          100,
+		ThrottledPeriods: 100,
+		ThrottledTime:    100,
+	}
+	cur := types.ThrottlingData{
+		Periods:          130,
+		ThrottledPeriods: 120,
+		ThrottledTime:    110,
+	}
+	diff := types.ThrottlingData{
+		Periods:          30,
+		ThrottledPeriods: 20,
+		ThrottledTime:    10,
+	}
+	d := newDockerStats(nil, 123, nil).(*DockerStats)
+	got := d.DiffThrottlingData(pre, cur)
+	assert.Equal(t, diff, got)
 }
 
 /*

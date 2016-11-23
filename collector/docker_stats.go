@@ -88,6 +88,36 @@ func (d *DockerStats) GetEndpoint() string {
 	return d.endpoint
 }
 
+// GetBufferRegex Returns bufferRegex
+func (d *DockerStats) GetBufferRegex() string {
+	return fmt.Sprintf("%s", d.bufferRegex)
+}
+
+// GetSkipRegex Returns bufferRegex
+func (d *DockerStats) GetSkipRegex() string {
+	return fmt.Sprintf("%s", d.skipRegex)
+}
+
+// GetStatsTimeout returns timeout config
+func (d *DockerStats) GetStatsTimeout() int {
+	return d.statsTimeout
+}
+
+// GetPerCore returns perCore
+func (d *DockerStats) GetPerCore() bool {
+	return d.perCore
+}
+
+// GetCpuThrottle returns cpuThrottle
+func (d *DockerStats) GetCpuThrottle() bool {
+	return d.cpuThrottle
+}
+
+// GetBlkIO returns blkIO
+func (d *DockerStats) GetBlkIO() bool {
+	return d.blkIO
+}
+
 // Configure takes a dictionary of values with which the handler can configure itself.
 func (d *DockerStats) Configure(configMap map[string]interface{}) {
 	if timeout, exists := configMap["dockerStatsTimeout"]; exists {
@@ -206,10 +236,17 @@ func (d *DockerStats) getDockerContainerInfo(container types.Container) {
 	}
 }
 
-func (d *DockerStats) getContainerStats(container types.Container) CntStat {
-	d.log.Debug("Inspect: ", container.ID)
-	ok := true
+// getRawContainerStats receives the container stats via the library
+func (d *DockerStats) getRawContainerStats(container types.Container) types.ContainerStats {
 	stat, err := d.dockerClient.ContainerStats(context.Background(), container.ID, false)
+	if err != nil {
+		d.log.Error(err)
+	}
+	return stat
+}
+
+func (d *DockerStats) assembleContainerStats(container types.Container, stat types.ContainerStats) CntStat {
+	ok := true
 	content, err := ioutil.ReadAll(stat.Body)
 	if err != nil {
 		ok = false
@@ -219,12 +256,18 @@ func (d *DockerStats) getContainerStats(container types.Container) CntStat {
 	if err != nil {
 		ok = false
 	}
-	s.CPUStats = d.diffCPUUsage(s.PreCPUStats, s.CPUStats)
+	s.CPUStats = d.DiffCPUStats(s.PreCPUStats, s.CPUStats)
 	return CntStat{
 		Container: container,
 		Stats:     s,
 		Ok:        ok,
 	}
+}
+
+func (d *DockerStats) getContainerStats(container types.Container) CntStat {
+	d.log.Debug("Inspect: ", container.ID)
+	stat := d.getRawContainerStats(container)
+	return d.assembleContainerStats(container, stat)
 }
 
 func (d *DockerStats) extractMetrics(container types.Container, stats types.StatsJSON) []metric.Metric {
@@ -234,25 +277,39 @@ func (d *DockerStats) extractMetrics(container types.Container, stats types.Stat
 	return metrics
 }
 
-func (d DockerStats) diffCPUUsage(pre types.CPUStats, cur types.CPUStats) types.CPUStats {
+// DiffCPUUsage create a diff out ot two (plus knowledge about the system usage)
+func (d DockerStats) DiffCPUUsage(pre types.CPUUsage, cur types.CPUUsage, sysusage uint64) types.CPUUsage {
+	var cpuu types.CPUUsage
+	cpuu.TotalUsage = cur.TotalUsage - pre.TotalUsage
+	cpuu.UsageInKernelmode = cur.UsageInKernelmode - pre.UsageInKernelmode
+	cpuu.UsageInUsermode = cur.UsageInUsermode - pre.UsageInUsermode
+	pCPU := cur.PercpuUsage
+	for idx, c := range pre.PercpuUsage {
+		pCPU[idx] = (pCPU[idx] - c) / sysusage
+	}
+	cpuu.PercpuUsage = pCPU
+	return cpuu
+}
+
+// DiffThrottlingData diffs two ThrottlingData
+func (d DockerStats) DiffThrottlingData(pre types.ThrottlingData, cur types.ThrottlingData) types.ThrottlingData {
+	return types.ThrottlingData{
+		// Number of periods with throttling active
+		Periods: cur.Periods - pre.Periods,
+		// Number of periods when the container hits its throttling limit.
+		ThrottledPeriods: cur.ThrottledPeriods - pre.ThrottledPeriods,
+		// Aggregate time the container was throttled for in nanoseconds.
+		ThrottledTime: cur.ThrottledTime - pre.ThrottledTime,
+	}
+}
+
+// DiffCPUStats create a diff out of two CPUStats
+func (d DockerStats) DiffCPUStats(pre types.CPUStats, cur types.CPUStats) types.CPUStats {
 	var cstat types.CPUStats
 	cstat.SystemUsage = cur.SystemUsage - pre.SystemUsage
-	cstat.ThrottlingData = types.ThrottlingData{
-		// Number of periods with throttling active
-		Periods: cur.ThrottlingData.Periods - pre.ThrottlingData.Periods,
-		// Number of periods when the container hits its throttling limit.
-		ThrottledPeriods: cur.ThrottlingData.ThrottledPeriods - pre.ThrottlingData.ThrottledPeriods,
-		// Aggregate time the container was throttled for in nanoseconds.
-		ThrottledTime: cur.ThrottlingData.ThrottledTime - pre.ThrottlingData.ThrottledTime,
-	}
-	cstat.CPUUsage.TotalUsage = cur.CPUUsage.TotalUsage - pre.CPUUsage.TotalUsage
-	cstat.CPUUsage.UsageInKernelmode = cur.CPUUsage.UsageInKernelmode - pre.CPUUsage.UsageInKernelmode
-	cstat.CPUUsage.UsageInUsermode = cur.CPUUsage.UsageInUsermode - pre.CPUUsage.UsageInUsermode
-	pCPU := cur.CPUUsage.PercpuUsage
-	for idx, c := range pre.CPUUsage.PercpuUsage {
-		pCPU[idx] = (pCPU[idx] - c) / cstat.SystemUsage
-	}
-	cstat.CPUUsage.PercpuUsage = pCPU
+	cstat.ThrottlingData = d.DiffThrottlingData(pre.ThrottlingData, cur.ThrottlingData)
+	cstat.CPUUsage = d.DiffCPUUsage(pre.CPUUsage, cur.CPUUsage, cstat.SystemUsage)
+
 	return cstat
 }
 
