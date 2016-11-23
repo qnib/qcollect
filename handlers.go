@@ -7,7 +7,7 @@ import (
 )
 
 func startHandlers(c config.Config) (handlers []handler.Handler) {
-	log.Info("Starting handlers...")
+	qlog.Info("Starting handlers...")
 	for name, config := range c.Handlers {
 		handlers = append(handlers, startHandler(name, c, config))
 	}
@@ -15,7 +15,7 @@ func startHandlers(c config.Config) (handlers []handler.Handler) {
 }
 
 func startHandler(name string, globalConfig config.Config, instanceConfig map[string]interface{}) handler.Handler {
-	log.Info("Starting handler ", name)
+	qlog.Info("Starting handler ", name)
 	handlerInst := handler.New(name)
 	if handlerInst == nil {
 		return nil

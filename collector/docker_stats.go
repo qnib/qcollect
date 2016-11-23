@@ -108,8 +108,8 @@ func (d *DockerStats) GetPerCore() bool {
 	return d.perCore
 }
 
-// GetCpuThrottle returns cpuThrottle
-func (d *DockerStats) GetCpuThrottle() bool {
+// GetCPUThrottle returns cpuThrottle
+func (d *DockerStats) GetCPUThrottle() bool {
 	return d.cpuThrottle
 }
 
