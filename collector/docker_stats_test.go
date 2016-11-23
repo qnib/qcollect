@@ -76,6 +76,9 @@ func TestDockerStatsConfigure(t *testing.T) {
 	assert.Equal(t, 9999, d.Interval())
 	assert.Equal(t, 123, d.GetStatsTimeout())
 	assert.Equal(t, ":2376", d.GetEndpoint())
+	assert.Equal(t, true, d.GetPerCore())
+	assert.Equal(t, true, d.GetCPUThrottle())
+	assert.Equal(t, true, d.GetBlkIO())
 	assert.Equal(t, "TestReg", d.GetBufferRegex())
 	assert.Equal(t, "SkipReg", d.GetSkipRegex())
 }
@@ -136,6 +139,63 @@ func TestDiffThrottlingData(t *testing.T) {
 	}
 	d := newDockerStats(nil, 123, nil).(*DockerStats)
 	got := d.DiffThrottlingData(pre, cur)
+	assert.Equal(t, diff, got)
+}
+
+func TestDiffCPUStats(t *testing.T) {
+	pre := types.CPUStats{
+		CPUUsage: types.CPUUsage{
+			TotalUsage:        1000,
+			UsageInKernelmode: 200,
+			UsageInUsermode:   800,
+			PercpuUsage: []uint64{
+				600,
+				200,
+			},
+		},
+		SystemUsage: 2000,
+		ThrottlingData: types.ThrottlingData{
+			Periods:          30,
+			ThrottledPeriods: 20,
+			ThrottledTime:    10,
+		},
+	}
+	cur := types.CPUStats{
+		CPUUsage: types.CPUUsage{
+			TotalUsage:        1100,
+			UsageInKernelmode: 300,
+			UsageInUsermode:   800,
+			PercpuUsage: []uint64{
+				600,
+				300,
+			},
+		},
+		SystemUsage: 2500,
+		ThrottlingData: types.ThrottlingData{
+			Periods:          130,
+			ThrottledPeriods: 120,
+			ThrottledTime:    110,
+		},
+	}
+	diff := types.CPUStats{
+		CPUUsage: types.CPUUsage{
+			TotalUsage:        100,
+			UsageInKernelmode: 100,
+			UsageInUsermode:   0,
+			PercpuUsage: []uint64{
+				0,
+				0,
+			},
+		},
+		SystemUsage: 500,
+		ThrottlingData: types.ThrottlingData{
+			Periods:          100,
+			ThrottledPeriods: 100,
+			ThrottledTime:    100,
+		},
+	}
+	d := newDockerStats(nil, 123, nil).(*DockerStats)
+	got := d.DiffCPUStats(pre, cur)
 	assert.Equal(t, diff, got)
 }
 

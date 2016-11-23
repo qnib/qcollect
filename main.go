@@ -20,7 +20,7 @@ const (
 	desc    = "Diamond compatible metrics collector"
 )
 
-var log = logrus.WithFields(logrus.Fields{"app": "qcollect"})
+var qlog = logrus.WithFields(logrus.Fields{"app": "qcollect"})
 
 func initLogrus(ctx *cli.Context) {
 	logrus.SetFormatter(&logrus.TextFormatter{
@@ -32,7 +32,7 @@ func initLogrus(ctx *cli.Context) {
 	if level, err := logrus.ParseLevel(ctx.String("log_level")); err == nil {
 		logrus.SetLevel(level)
 	} else {
-		log.Error(err)
+		qlog.Error(err)
 		logrus.SetLevel(logrus.InfoLevel)
 	}
 
@@ -99,7 +99,7 @@ func start(ctx *cli.Context) {
 	}
 	quit := make(chan bool)
 	initLogrus(ctx)
-	log.Info("Starting qcollect...")
+	qlog.Info("Starting qcollect...")
 
 	c, err := config.ReadConfig(ctx.String("config"))
 	if err != nil {
@@ -117,7 +117,7 @@ func start(ctx *cli.Context) {
 	readFromCollectors(collectors, handlers, collectorStatChan)
 
 	hook := NewLogErrorHook(handlers)
-	log.Logger.Hooks.Add(hook)
+	qlog.Logger.Hooks.Add(hook)
 
 	<-quit
 }
@@ -157,10 +157,10 @@ func readCollectorStat(collectorStatChan <-chan metric.CollectorEmission) intern
 
 func visualize(ctx *cli.Context) {
 	initLogrus(ctx)
-	log.Info("Visualizing qcollect...")
+	qlog.Info("Visualizing qcollect...")
 
 	if len(ctx.Args()) == 0 {
-		log.Error("You need a collector file to visualize!, see 'qcollect help visualize'")
+		qlog.Error("You need a collector file to visualize!, see 'qcollect help visualize'")
 		return
 	}
 
@@ -190,7 +190,7 @@ func visualize(ctx *cli.Context) {
 
 	dieAfter := time.Duration(ctx.Int("die-after"))
 	time.AfterFunc(dieAfter*time.Second, func() {
-		log.Info("Quitting...")
+		qlog.Info("Quitting...")
 		quitChannel <- true
 	})
 	// Wait to quit

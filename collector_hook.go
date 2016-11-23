@@ -21,7 +21,7 @@ type LogErrorHook struct {
 // NewLogErrorHook creates a hook to be added to the collector logger
 // so that errors are forwarded as a metric to the handlers.
 func NewLogErrorHook(handlers []handler.Handler) *LogErrorHook {
-	hookLog := log.WithFields(logrus.Fields{"hook": "LogErrorHook"})
+	hookLog := qlog.WithFields(logrus.Fields{"hook": "LogErrorHook"})
 	return &LogErrorHook{handlers, hookLog}
 }
 

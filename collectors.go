@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/prometheus/log"
 	"github.com/qnib/qcollect/collector"
 	"github.com/qnib/qcollect/config"
 	"github.com/qnib/qcollect/handler"
