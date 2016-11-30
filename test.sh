@@ -1,8 +1,17 @@
 #!/bin/bash
-set -x
 
-GIT_TAG=$(git describe --abbrev=0 --tags)
-mkdir -p ./resources/coverity
-gom test -cover ./... |grep coverage |sed -e 's#github.com/qnib/##' |awk '{print $2" "$5}' > ./resources/coverity/cover_cur.out
-./cover.plt > ./resources/coverity/cover_${GIT_TAG}.png
-mv ./resources/coverity/cover_cur.out ./resources/coverity/cover_${GIT_TAG}.out
+govendor fetch +missing
+echo "> govendor remove +unused"
+govendor remove +unused
+echo "> govendor sync"
+govendor sync
+if [ ! -d resources/coverity ];then
+    mkdir -p resources/coverity
+fi
+go test -coverprofile=coverage.out
+for x in $(find . -maxdepth 1 -type d |egrep -v "(\.$|\.git|vendor|bin|resources)");do
+    go test -coverprofile=resources/coverity/${x}.out ${x} >>/dev/null
+done
+coveraggregator -o resources/coverity/coverage-all.out $(find . -name coverage.out |egrep -v "(\.$|\.git|vendor|bin)") >>/dev/null
+go tool cover -func=resources/coverity/coverage-all.out |tee ./coverage-all.out
+go tool cover -html=resources/coverity/coverage-all.out -o resources/coverity/all.html
