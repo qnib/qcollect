@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+    //"github.com/qnib/qcollect/metric"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -60,28 +61,12 @@ func TestOpenTSBDCollect(t *testing.T) {
 		t.Fail()
 	}
 }
-
-func TestParseOpenTSDBMetric(t *testing.T) {
-	rawData := "put sys.cpu.user host=webserver01,cpu=0 1356998400 1"
-	c := newOpenTSDB(nil, 12, nil).(*OpenTSDB)
-	var conf map[string]interface{}
-	c.Configure(conf)
-	m, ok := c.parseMetric(rawData)
-	assert.True(t, ok, m.Name)
-	d := map[string]string{
-		"host": "webserver01",
-		"cpu":  "0",
-	}
-	f := metric.NewFilter("sys.cpu.user", "gauge", d)
-	assert.True(t, m.IsFiltered(f), "Filter should map metric")
-
-}
 */
 
 func TestInvalidOpenTSDBToMetric(t *testing.T) {
 	rawData := "put 1356998400 host=webserver01,cpu=0 1"
 	c := newOpenTSDB(nil, 12, nil).(*OpenTSDB)
-	var conf map[string]interface{}
+    var conf map[string]interface{}
 	c.Configure(conf)
 	_, ok := c.parseMetric(rawData)
 	assert.False(t, ok)
@@ -101,3 +86,24 @@ func connectToOpenTSDBCollector(c *OpenTSDB) (net.Conn, error) {
 	}
 	return conn, err
 }
+/*
+func TestOpenTSDBToMetric(t *testing.T) {
+	rawData := "put Test host=webserver01 1356998400 1"
+	c := newOpenTSDB(nil, 12, nil).(*OpenTSDB)
+	var conf map[string]interface{}
+    conf["metric-regex"] = `(put\s+)?(?P<name>[0-9\.\-\_a-zA-Z]+)\s+(?P<dimensions>[0-9\.\-\_\=\,a-zA-Z]+)\s+(?P<time>\d+)\s+(?P<value>[0-9\.]+)`
+    c.Configure(conf)
+	_, ok := c.parseMetric(rawData)
+	assert.True(t, ok)
+}
+/*
+func TestParseMetric(t *testing.T) {
+    c := newOpenTSDB(nil, 12, nil).(*OpenTSDB)
+	var conf map[string]interface{}
+	c.Configure(conf)
+    rawData := "put TestMetric host=webserver01 1356998400 1"
+	_, ok := c.parseMetric(rawData)
+	assert.True(t, ok)
+    //exp := metric.New("TestMetric")
+    //assert.Equal(t, m.Name, exp.Name)
+}*/

@@ -42,5 +42,10 @@ govendor sync
 rm -f ./bin/qcollect_${GIT_TAG}_${ID}
 go build -o ./bin/qcollect_${GIT_TAG}_${ID}
 mv main.go.bkp main.go
-rm -f ./bin/qcollect_latest_${ID}
-cp ./bin/qcollect_${GIT_TAG}_${ID} ./bin/qcollect_latest_${ID}
+if [ "X${DRONE_JOB_ID}" == "X" ];then
+    rm -f ./bin/qcollect_latest_${ID}
+    cp ./bin/qcollect_${GIT_TAG}_${ID} ./bin/qcollect_latest_${ID}
+else
+    mkdir -p ./bin/drone/
+    cp ./bin/qcollect_${GIT_TAG}_${ID} ./bin/drone/
+fi
