@@ -1,0 +1,22 @@
+build:
+  test:
+    image: qnib/golang
+    pull: true
+    commands:
+     - ./test.sh
+    environment:
+     - GOPATH=/drone/
+  build:
+    image: qnib/golang
+    pull: true
+    commands:
+     - ./build.sh
+    environment:
+     - GOPATH=/drone/
+publish:
+  github_release:
+    api_key: $$GITHUB_API_KEY
+    files: bin/drone/*
+    checksum: sha1
+    when:
+      event: tag
