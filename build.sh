@@ -37,6 +37,7 @@ if [ ! -d ${GOPATH}/src/github.com/davecheney/profile ];then
     git clone https://github.com/davecheney/profile.git ${GOPATH}/src/github.com/davecheney/profile
 fi
 
+govendor fetch +missing
 govendor sync
 
 rm -f ./bin/qcollect_${GIT_TAG}_${ID}
