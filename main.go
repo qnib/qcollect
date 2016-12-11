@@ -7,7 +7,6 @@ import (
 
 	"github.com/Sirupsen/logrus"
 	"github.com/codegangsta/cli"
-	"github.com/davecheney/profile"
 	"github.com/qnib/qcollect/config"
 	"github.com/qnib/qcollect/handler"
 	"github.com/qnib/qcollect/internalserver"
@@ -87,16 +86,6 @@ func main() {
 }
 
 func start(ctx *cli.Context) {
-	if ctx.Bool("profile") {
-		pcfg := profile.Config{
-			CPUProfile:   true,
-			MemProfile:   true,
-			BlockProfile: true,
-			ProfilePath:  ".",
-		}
-		p := profile.Start(&pcfg)
-		defer p.Stop()
-	}
 	quit := make(chan bool)
 	initLogrus(ctx)
 	qlog.Info("Starting qcollect...")
