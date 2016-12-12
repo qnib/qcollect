@@ -1,5 +1,4 @@
-[![Build Status](http://wins.ddns.net:8000/api/badges/qnib/qcollect/status.svg)](http://wins.ddns.net:8000/qnib/qcollect)
-# qcollect
+# qcollect [![Build Status](http://wins.ddns.net:8000/api/badges/qnib/qcollect/status.svg)](http://wins.ddns.net:8000/qnib/qcollect) [![Coverage](http://wins.ddns.net:8008/badges/qnib/qcollect/coverage.svg)](http://wins.ddns.net:8008/qnib/qcollect)
 Diamond compatible metrics collector. Based on yelp/fullerite fork.
 
 # Old README of QNIBCollect
